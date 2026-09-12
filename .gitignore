@@ -23,3 +23,9 @@ node_modules/
 # OS
 .DS_Store
 Thumbs.db
+
+# SE workflow temporary files (issue #6)
+tests/TEST-CASES-*.md
+tests/TEST-RESULTS-*.md
+IMPLEMENTATION-*.md
+*-review.md
