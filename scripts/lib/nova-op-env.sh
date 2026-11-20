@@ -2,6 +2,7 @@
 # DO NOT EDIT — installed/managed by nova-workspace:scripts/lib/nova-op-env.sh
 # Last synced: 2026-11-20
 # Local changes will be overwritten by the owning repo's installer.
+# To re-vendor: see nova-op-env.sh.VENDORED.json and update its sha256.
 #
 # Vendored copy of the nova-workspace helper. Loads environment variables from
 # ~/.openclaw/scripts/nova-op-item-map.json and resolves each requested

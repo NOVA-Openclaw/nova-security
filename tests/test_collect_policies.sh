@@ -80,6 +80,21 @@ test_helper_behavior() {
 }
 run_test test_helper_behavior
 
+# Vendored helper hash check
+test_vendored_helper_hash() {
+    local vendored_file meta_file expected actual
+    vendored_file="$REPO_ROOT/scripts/lib/nova-op-env.sh"
+    meta_file="$REPO_ROOT/scripts/lib/nova-op-env.sh.VENDORED.json"
+    [ -f "$vendored_file" ] || { fail "test_vendored_helper_hash" "missing $vendored_file"; return 1; }
+    [ -f "$meta_file" ] || { fail "test_vendored_helper_hash" "missing $meta_file"; return 1; }
+    expected=$(jq -r '.sha256' "$meta_file")
+    actual=$(sha256sum "$vendored_file" | awk '{print $1}')
+    [ "$expected" = "$actual" ] || { fail "test_vendored_helper_hash" "hash mismatch: expected $expected, got $actual"; return 1; }
+    grep -q '"source_repo": "NOVA-Openclaw/nova-workspace"' "$meta_file" || { fail "test_vendored_helper_hash" "wrong source_repo"; return 1; }
+    grep -q '"revendor"' "$meta_file" || { fail "test_vendored_helper_hash" "missing revendor instruction"; return 1; }
+}
+run_test test_vendored_helper_hash
+
 # Summary
 echo ""
 echo "================================"
