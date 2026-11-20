@@ -18,6 +18,8 @@ MIN_CONFIDENCE=0.9  # Auto-apply threshold
 DB_NAME="${DB_NAME:-nova_memory}"
 LOG_FILE="${LOG_FILE:-/home/nova/clawd/logs/policy-collector.log}"
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 # Input
 INPUT_TEXT="${1:-$(cat)}"
 [ -z "$INPUT_TEXT" ] && exit 0
@@ -66,10 +68,18 @@ log() {
 
 log "Policy pattern detected in message from $SENDER"
 
-# Get API key
-[ -z "$ANTHROPIC_API_KEY" ] && [ -f ~/.secrets/anthropic-api-key ] && \
-    ANTHROPIC_API_KEY=$(cat ~/.secrets/anthropic-api-key)
-[ -z "$ANTHROPIC_API_KEY" ] && { log "ERROR: No API key"; exit 1; }
+# Resolve API key via nova-op and the item map.
+# shellcheck source=/dev/null
+source "$SCRIPT_DIR/lib/nova-op-env.sh"
+if ! nova_op_load_env ANTHROPIC_API_KEY; then
+    log "ERROR: failed to resolve ANTHROPIC_API_KEY via nova-op"
+    exit 1
+fi
+
+# Build a header file so the key never appears in curl argv / ps listings.
+ANTHROPIC_HEADER_FILE=$(mktemp)
+printf 'x-api-key: %s\n' "$ANTHROPIC_API_KEY" > "$ANTHROPIC_HEADER_FILE"
+chmod 600 "$ANTHROPIC_HEADER_FILE"
 
 # Get existing entities for resolution context
 ENTITY_CONTEXT=$(psql -h localhost -U nova -d "$DB_NAME" -t -A -c "
@@ -135,10 +145,13 @@ PAYLOAD=$(jq -n --arg prompt "$PROMPT" '{
 }')
 
 RESPONSE=$(curl -s https://api.anthropic.com/v1/messages \
-  -H "x-api-key: $ANTHROPIC_API_KEY" \
+  -H "@$ANTHROPIC_HEADER_FILE" \
   -H "anthropic-version: 2023-06-01" \
   -H "content-type: application/json" \
   -d "$PAYLOAD" | jq -r '.content[0].text // empty')
+
+# Clean up the header file immediately after the curl.
+rm -f "$ANTHROPIC_HEADER_FILE"
 
 [ -z "$RESPONSE" ] && { log "ERROR: Empty API response"; exit 1; }
 
