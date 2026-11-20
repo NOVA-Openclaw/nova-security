@@ -15,6 +15,24 @@
 #
 # Never prints secret values.
 
+# nova-op-env.sh — load environment variables from the 1Password item map.
+#
+# Reads ~/.openclaw/scripts/nova-op-item-map.json and resolves each requested
+# variable via nova-op by item ID. Vault IDs come from the map, not from any
+# hardcoded per-script value.
+#
+# Usage:
+#   source "$(dirname "$0")/lib/nova-op-env.sh"
+#   nova_op_load_env OPENPROJECT_API_KEY ELEVENLABS_API_KEY
+#
+# The map shape is:
+#   {
+#     "OPENPROJECT_API_KEY": {"vault": "<vault-id>", "item": "<item-id>", "field": "API Key"},
+#     ...
+#   }
+#
+# Never prints secret values.
+
 set -euo pipefail
 
 NOVA_OP="${NOVA_OP:-$HOME/.local/bin/nova-op}"
@@ -24,6 +42,7 @@ nova_op_resolve() {
     local var="$1"
     local config_path="${2:-$NOVA_OP_ITEM_MAP}"
 
+    # Caller can pre-inject the value (e.g. from a parent plugin or test).
     local current
     eval "current=\${$var:-}"
     if [[ -n "$current" ]]; then

@@ -88,8 +88,21 @@ test_vendored_helper_hash() {
     [ -f "$vendored_file" ] || { fail "test_vendored_helper_hash" "missing $vendored_file"; return 1; }
     [ -f "$meta_file" ] || { fail "test_vendored_helper_hash" "missing $meta_file"; return 1; }
     expected=$(jq -r '.sha256' "$meta_file")
+    expected_body=$(jq -r '.source_body_sha256' "$meta_file")
     actual=$(sha256sum "$vendored_file" | awk '{print $1}')
-    [ "$expected" = "$actual" ] || { fail "test_vendored_helper_hash" "hash mismatch: expected $expected, got $actual"; return 1; }
+    actual_body=$(python3 - "$vendored_file" <<'PY'
+import hashlib, sys
+path = sys.argv[1]
+lines = []
+for line in open(path).read().splitlines():
+    stripped = line.lstrip()
+    if stripped and not stripped.startswith("#"):
+        lines.append(line)
+print(hashlib.sha256("\n".join(lines).encode("utf-8")).hexdigest())
+PY
+)
+    [ "$expected" = "$actual" ] || { fail "test_vendored_helper_hash" "full hash mismatch: expected $expected, got $actual"; return 1; }
+    [ "$expected_body" = "$actual_body" ] || { fail "test_vendored_helper_hash" "body hash mismatch: expected $expected_body, got $actual_body"; return 1; }
     grep -q '"source_repo": "NOVA-Openclaw/nova-workspace"' "$meta_file" || { fail "test_vendored_helper_hash" "wrong source_repo"; return 1; }
     grep -q '"revendor"' "$meta_file" || { fail "test_vendored_helper_hash" "missing revendor instruction"; return 1; }
 }
