@@ -1,7 +1,7 @@
 {
   "source_repo": "NOVA-Openclaw/nova-workspace",
   "source_path": "scripts/lib/nova-op-env.sh",
-  "source_commit": "ca3f58b",
+  "source_commit": "564f451ef3de021b84d0d0edb4e1f5878f06eb17",
   "sha256": "abe4630cdb2eba9e2c836679eced88b2fbf7cc217ea27722c2b3e88c5fb8e348",
   "source_body_sha256": "0484e43b88ef61b2d559bded42a9ee85354ddc8d01acaf4b41777b61c6ca3d1f",
   "revendor": "Copy scripts/lib/nova-op-env.sh from NOVA-Openclaw/nova-workspace at commit ca3f58b, then update this file's sha256 and source_body_sha256."
