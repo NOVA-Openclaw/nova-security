@@ -54,6 +54,16 @@ psql -d nova_memory -f schema/003-security-policies.sql
 ./scripts/collect-policies.sh "policy statement text"
 ```
 
+### Secret Hygiene (SecretRef migration, nova-workspace#309)
+
+`collect-policies.sh` resolves `ANTHROPIC_API_KEY` at runtime via `nova-op`
+(`scripts/lib/nova-op-env.sh`), looked up by item ID in the per-agent item
+map (`~/.openclaw/scripts/nova-op-item-map.json`). There is no plaintext
+`~/.secrets/anthropic-api-key` file fallback — resolution failure is loud
+and non-zero-exit. The resolved key is written to a mode-600 temp header
+file and passed to `curl` via `-H @file`, then deleted immediately after
+the request, so it never appears in `curl` argv or `ps` output.
+
 ## Related Projects
 
 - [nova_memory](../docs/) - Memory database (entities, facts, events)
